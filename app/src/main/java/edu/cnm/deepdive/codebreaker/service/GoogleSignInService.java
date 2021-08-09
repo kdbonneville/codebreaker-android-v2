@@ -11,6 +11,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.Task;
 import edu.cnm.deepdive.codebreaker.BuildConfig;
+import io.reactivex.Completable;
 import io.reactivex.Single;
 
 public class GoogleSignInService {
@@ -85,6 +86,9 @@ public class GoogleSignInService {
   public Task<Void> signOut() {
     return client.signOut()
         .addOnCompleteListener((ignored) -> setAccount(null));
+  }
+
+  public Completable refreshUser() {
   }
 
   private static class InstanceHolder {
