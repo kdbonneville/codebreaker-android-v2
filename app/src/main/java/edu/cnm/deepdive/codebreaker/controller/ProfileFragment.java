@@ -18,7 +18,7 @@ import edu.cnm.deepdive.codebreaker.databinding.FragmentProfileBinding;
 import edu.cnm.deepdive.codebreaker.model.entity.User;
 import edu.cnm.deepdive.codebreaker.viewmodel.UserViewModel;
 
-public class ProfileFragment<FragmentProfileBinding, User> extends DialogFragment implements TextWatcher {
+public class ProfileFragment<FragmentProfileBinding> extends DialogFragment implements TextWatcher {
 
   private View root;
   private AlertDialog dialog;
@@ -32,28 +32,21 @@ public class ProfileFragment<FragmentProfileBinding, User> extends DialogFragmen
     // TODO Read & process any arguments.
   }
 
-  @SuppressWarnings("ConstantConditions")
   @NonNull
   @Override
   public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
     binding = FragmentProfileBinding.inflate(LayoutInflater.from(getContext()), null, false);
-    binding.displayName.addTextChangeListener(this);
+    binding.displayName.addTextChangedListener(this);
+    //noinspection ConstantConditions
     dialog = new AlertDialog.Builder(getContext())
         .setIcon(android.R.drawable.ic_dialog_info)
         .setTitle(R.string.profile_title)
-        .setView(binding.getRoot())
+      //  .setView(binding.getRoot())
         .setPositiveButton(android.R.string.ok, (dlg, wh) -> save())
-        .setNeutralButton(android.R.string.cancel, (dlg, wh) -> { /* Do nothing */})
+        .setNeutralButton(android.R.string.cancel, null)
         .create();
     dialog.setOnShowListener((dlg) -> checkSubmitConditions());
     return dialog;
-  }
-
-  private void save() {
-    user.setDisplayName(binding.displayName.getText().toString().trim());
-    String interests = binding.interests.getText().toString().trim();
-    user.setInterests(interests.isEmpty() ? null : interests);
-    viewModel.save(user);
   }
 
   @Nullable
@@ -68,23 +61,27 @@ public class ProfileFragment<FragmentProfileBinding, User> extends DialogFragmen
     super.onViewCreated(view, savedInstanceState);
     viewModel = new ViewModelProvider(this).get(UserViewModel.class);
     getLifecycle().addObserver(viewModel);
-    viewModel.getUser().observe(getViewLifecycleOwner(), this::onChanged);
+    viewModel.getUser().observe(getViewLifecycleOwner(), (user) -> {
+      this.user = user;
+      binding.displayName.setText(user.getDisplayName());
+      if (user.getInterests() != null) {
+        binding.interests.setText(user.getInterests());
+      }
+    });
   }
 
-  private void checkSubmitConditions() {
-    Button positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-    String displayName = binding.displayName.getText().toString().trim();
-    positive.setEnabled(!displayName.isEmpty());
+  @Override
+  public void onActivityCreated(
+      @Nullable @org.jetbrains.annotations.Nullable Bundle savedInstanceState) {
+    super.onActivityCreated(savedInstanceState);
   }
 
   @Override
   public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
   }
 
   @Override
   public void onTextChanged(CharSequence s, int start, int before, int count) {
-
   }
 
   @Override
@@ -92,11 +89,19 @@ public class ProfileFragment<FragmentProfileBinding, User> extends DialogFragmen
     checkSubmitConditions();
   }
 
-  private void onChanged(Object user) {
-    this.user = user;
-    binding.displayName.setText(user.getDisplayName());
-    if (user.getInterests() != null) {
-      binding.interests.setText(user.getInterests());
-    }
+  @SuppressWarnings("ConstantConditions")
+  private void save() {
+    user.setDisplayName(binding.displayName.getText().toString().trim());
+    String interests = binding.interests.getText().toString().trim();
+    user.setInterests(interests.isEmpty() ? null : interests);
+    viewModel.save(user);
   }
+
+  private void checkSubmitConditions() {
+    Button positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+    //noinspection ConstantConditions
+    String displayName = binding.displayName.getText().toString().trim();
+    positive.setEnabled(!displayName.isEmpty());
+  }
+
 }
